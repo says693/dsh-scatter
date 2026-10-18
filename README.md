@@ -124,6 +124,36 @@ How to read the densities: each is "hits per 1000 characters" normalized to
 0..1, saturating at 8 hits/1000 chars for detail and 12 for filler. A short
 prompt with one stray "please note" lands near 0.05, not near the threshold.
 
+### Overriding without touching the package
+
+Don't edit the patch inside `node_modules` — a reinstall overwrites it. Put an
+override in the profile's own patch layer (`<profile>/cordis.patch.yml`), which
+is applied after every bundle layer and wins by `id`:
+
+```yaml
+- id: dsh-prompt-scatter
+  name: dsh-prompt-scatter
+  config:
+    probe:
+      enabled: true
+      detailDensity: 0.55
+      fillerDensity: 0.5
+      repetitionRepeats: 6   # only this changed
+    maxTokens: 4096
+    timeoutMs: 90000
+```
+
+Two behaviours worth knowing:
+
+- **A config block replaces, it does not merge.** Writing only
+  `config: { probe: { repetitionRepeats: 6 } }` drops `detailDensity` and
+  `fillerDensity` entirely. The plugin's `normalizeConfig` then fills them from
+  the defaults above, so nothing breaks — but you are silently back at the
+  default values rather than inheriting whatever the bundle declared. Restate
+  every key you care about, as in the example.
+- **Restart is required.** The generated `cordis.yml` is rebuilt at startup, so
+  an edited patch layer changes nothing until the app is restarted.
+
 ## Compatibility
 
 Built and verified against DSH `0.2.0-rc.2` on Windows.
