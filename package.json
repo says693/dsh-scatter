@@ -1,6 +1,6 @@
 {
-  "name": "dsh-prompt-optimizer",
-  "version": "0.1.0",
+  "name": "dsh-prompt-scatter",
+  "version": "0.2.0",
   "description": "Prompt optimizer for the DSH composer: rewrite the draft with the session's current model, stream the result back into the input, or generate several candidates to pick from.",
   "type": "module",
   "license": "MIT",

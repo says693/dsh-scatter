@@ -1,8 +1,12 @@
-# dsh-prompt-optimizer
+# dsh-prompt-scatter
 
 [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
 A prompt optimizer for the [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) composer.
+
+> Renamed from `dsh-prompt-optimizer` in 0.2.0. Package name, plugin id, routes
+> (`/api/dsh-prompt-scatter`), style prefix (`dsh-ps-*`) and storage keys all
+> moved together, so the two cannot be installed side by side.
 
 A small sparkle button appears in the composer. Click it and the session's
 **current model** rewrites your draft into a better prompt — streaming the
@@ -30,13 +34,13 @@ pick from.
 Requires DSH kernel `>= 0.2.0-rc.2`.
 
 ```sh
-dsh plugin --profile <name> add file:/absolute/path/to/dsh-prompt-optimizer
+dsh plugin --profile <name> add file:/absolute/path/to/dsh-prompt-scatter
 ```
 
 Or install from the plugin UI: **Settings → Plugins → Add plugin**, and enter an
 absolute path (or a git/registry spec once published).
 
-By hand: add `"dsh-prompt-optimizer"` to the profile's `dependencies`, append it
+By hand: add `"dsh-prompt-scatter"` to the profile's `dependencies`, append it
 to `dsh.profile.bundles`, then run `pnpm install` inside the profile directory.
 
 The package is a DSH bundle — it declares `dsh.bundle.patch` for the host half
@@ -62,8 +66,8 @@ Two halves, both plain modules:
 
 | Route | Purpose |
 | --- | --- |
-| `POST /api/dsh-prompt-optimizer` | SSE stream of `{type:"delta"\|"candidate"\|"done"\|"error"}` frames |
-| `POST /api/dsh-prompt-optimizer/stop` | Aborts the active optimization for a session |
+| `POST /api/dsh-prompt-scatter` | SSE stream of `{type:"delta"\|"candidate"\|"done"\|"error"}` frames |
+| `POST /api/dsh-prompt-scatter/stop` | Aborts the active optimization for a session |
 
 It calls `ctx.llm.stream({ provider, model, messages, system, maxTokens })`
 through the kernel's provider-neutral LLM seam, so it works with every adapter
@@ -91,7 +95,7 @@ other bundle. The interesting API differences it had to bridge:
 | `PromptOptimizeButton({ input, … })` reading `input.draft` | `useInput((state) => state.draft)` | the session standard kit exposes `useInput` + `inputActions`, not an `input` object |
 | `source: { kind: "plugin", … }` | `source: { kind: "user" }` | `MessageSourceMap` has no catch-all `plugin` kind |
 | `IconSparkle16` / `IconLoadingOutline16` | `IconSparkleRegular` / `IconLoadingOutlineRegular` | the primitives package exports the `Regular`/`Medium` variants |
-| `webui-po-*` classes, `/api/dsh-webui-prompt-optimizer` | `dsh-po-*`, `/api/dsh-prompt-optimizer` | drops the third-party namespace |
+| `webui-po-*` classes, `/api/dsh-webui-prompt-optimizer` | `dsh-ps-*`, `/api/dsh-prompt-scatter` | drops the third-party namespace |
 
 The prompt-engineering system prompts, the SSE protocol, the abort path, the
 `<<< >>>` injection guard and the "restore the draft if untouched" rule are

@@ -2,5 +2,5 @@
 # (a plain Cordis plugin serving the optimize/stop SSE routes); the `dsh.client`
 # declaration in package.json makes the web app load ./client as the browser half.
 - insert:
-    - id: dsh-prompt-optimizer
-      name: dsh-prompt-optimizer
+    - id: dsh-prompt-scatter
+      name: dsh-prompt-scatter
