@@ -81,10 +81,10 @@ Guardrails: loopback-only (non-loopback callers get 403), POST-only (405),
 
 Built and verified against DSH `0.2.0-rc.2` on Windows.
 
-Porting note: this package began as a port of the prompt-optimizer module that
-ships inside `@dsh-external/dsh-webui` (as used by EAC-Desktop), rebuilt as a
-standalone plugin against the official contract rather than string-patching a
-third-party bundle. The substantive API changes were:
+This plugin implements a feature that previously existed only as a
+string-patch on a third-party WebUI bundle. It is written against the official
+DSH plugin contract instead, so it installs, upgrades and uninstalls like any
+other bundle. The interesting API differences it had to bridge:
 
 | Third-party bundle | Here | Why |
 | --- | --- | --- |
@@ -95,7 +95,7 @@ third-party bundle. The substantive API changes were:
 
 The prompt-engineering system prompts, the SSE protocol, the abort path, the
 `<<< >>>` injection guard and the "restore the draft if untouched" rule are
-unchanged.
+carried over unchanged.
 
 ## Layout
 
@@ -106,6 +106,10 @@ cordis.patch.yml       bundle patch (one insert row)
 icon.svg               plugin icon shown by the plugin list
 package.json           dsh.bundle / dsh.client declarations
 ```
+
+## Author
+
+says693 — <https://github.com/says693>
 
 ## License
 

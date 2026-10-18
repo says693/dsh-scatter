@@ -4,12 +4,24 @@
   "description": "Prompt optimizer for the DSH composer: rewrite the draft with the session's current model, stream the result back into the input, or generate several candidates to pick from.",
   "type": "module",
   "license": "MIT",
+  "author": "says693",
+  "contributors": [
+    "says693"
+  ],
   "keywords": [
     "dsh",
     "dsh-plugin",
     "prompt-optimize"
   ],
   "icon": "./icon.svg",
+  "homepage": "https://github.com/says693/dsh-scatter#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/says693/dsh-scatter.git"
+  },
+  "bugs": {
+    "url": "https://github.com/says693/dsh-scatter/issues"
+  },
   "files": [
     "lib",
     "cordis.patch.yml",
