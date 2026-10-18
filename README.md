@@ -79,7 +79,50 @@ hook, and writes back only through `inputActions.setDraft` — the single public
 write path. It never touches the editor DOM.
 
 Guardrails: loopback-only (non-loopback callers get 403), POST-only (405),
-4 MB request bodies, 200 000 character prompts, and a 90-second timeout.
+4 MB request bodies, 200 000 character prompts, and a configurable timeout.
+
+## Output-quality probe
+
+Before optimizing, the host inspects the draft for three failure modes that
+language models reproduce when asked to "improve" a prompt:
+
+| Issue | What it looks for |
+| --- | --- |
+| `repetition` | the same substring repeated over and over, or the same line repeated (leading numbering stripped, so `1. x` / `2. x` / `3. x` still trips) |
+| `useless-detail` | density of incidental detail: timestamps, IPs, absolute paths, long digit runs, version numbers, URLs, quoted blobs |
+| `filler` | density of padding phrases ("please note", "it is important to", "in conclusion", and their Chinese equivalents) |
+
+Each detected issue appends one corrective rule to the system prompt, so the
+instruction set is chosen from the input instead of being fixed. The preview
+card reports which issues were defended against.
+
+Detection is pure text analysis — it never spends a second model call.
+
+## Configuration
+
+The bundle patch carries a `config` block, validated against the plugin's
+exported `Config` (schemastery) at activation:
+
+```yaml
+- insert:
+    - id: dsh-prompt-scatter
+      name: dsh-prompt-scatter
+      config:
+        probe:
+          enabled: true          # false = fixed instruction set, no probing
+          detailDensity: 0.55    # 0..1, lower = stricter
+          fillerDensity: 0.5     # 0..1, lower = stricter
+          repetitionRepeats: 4   # 2..20, lower = stricter
+        maxTokens: 4096          # 256..32768
+        timeoutMs: 90000         # 5000..600000
+```
+
+Every key is optional. Out-of-range values are clamped, and unknown shapes fall
+back to the defaults above rather than failing the plugin.
+
+How to read the densities: each is "hits per 1000 characters" normalized to
+0..1, saturating at 8 hits/1000 chars for detail and 12 for filler. A short
+prompt with one stray "please note" lands near 0.05, not near the threshold.
 
 ## Compatibility
 
@@ -105,6 +148,8 @@ carried over unchanged.
 
 ```
 lib/index.js           host half — routes, SSE, llm.stream, guardrails
+lib/probe.js           output-quality detector (repetition / detail / filler)
+lib/config.js          Config schema + normalization
 lib/client.js          browser half — composer button, panel, candidates
 cordis.patch.yml       bundle patch (one insert row)
 icon.svg               plugin icon shown by the plugin list

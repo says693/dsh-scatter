@@ -1,6 +1,25 @@
 # Bundle patch layer: the row loads the package's main entry as the host half
 # (a plain Cordis plugin serving the optimize/stop SSE routes); the `dsh.client`
 # declaration in package.json makes the web app load ./client as the browser half.
+#
+# `config` is validated against the plugin's exported Config (schemastery) at
+# activation. Every key below is optional; delete a key to use its default.
 - insert:
     - id: dsh-prompt-scatter
       name: dsh-prompt-scatter
+      config:
+        probe:
+          # Turn the whole probe off to fall back to a fixed instruction set.
+          enabled: true
+          # 0..1 — how much incidental detail (timestamps, IPs, paths, long
+          # number runs, versions, URLs) counts as padding. Lower = stricter.
+          detailDensity: 0.55
+          # 0..1 — how much filler phrasing counts as padding. Lower = stricter.
+          fillerDensity: 0.5
+          # 2..20 — how many times the same substring must repeat before it
+          # counts as a loop. Lower = stricter.
+          repetitionRepeats: 4
+        # 256..32768 — token cap for one optimization pass.
+        maxTokens: 4096
+        # 5000..600000 — abort an optimization that runs longer than this.
+        timeoutMs: 90000
