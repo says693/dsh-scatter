@@ -34,7 +34,7 @@ improve next, plus a box to write your own.
 - **Session-aware** — the optimization reads the session's recent conversation
   as background, so the rewrite fits what you are working on instead of judging
   the draft in isolation. Default: last 3 turns, ~2000 characters, configurable.
-- **Optional interaction habits** — a switch folds five working habits
+- **Optional interaction tuning** — a switch folds five interaction rules
   (narrate while working, speak up when you need a human, how to ask, budget
   your verification, plain speech) into the rewritten prompt. Off by default,
   and when on it applies to that one optimization only.
@@ -110,7 +110,7 @@ read on the host through `sessions.deriveMessages()`, keeping the last N turns,
 dropping system messages and tool calls, and truncating by character budget from
 the most recent turn backwards.
 
-## Interaction habits (prompt-level, not system-level)
+## Interaction tuning (prompt-level, not system-level)
 
 `dsh-chatterbox` injects a similar protocol into the **system prompt** of every
 turn through `systemPrompt.section` — it is always on, and you cannot choose per
@@ -242,7 +242,7 @@ The prompt-engineering system prompts, the SSE protocol, the abort path and the
 lib/index.js           host half — routes, SSE, llm.stream, guardrails
 lib/directions.js      direction dimensions: classify, audit, diversify
 lib/probe.js           output-quality detector (repetition / detail / filler)
-lib/habits.js          interaction-habits prompt fragment (opt-in)
+lib/habits.js          interaction-tuning prompt fragment (opt-in)
 lib/config.js          Config schema + normalization
 lib/versions.js        version-chain model (append-only, rollback by cursor)
 lib/client.js          browser half — composer button, panels, version chain
