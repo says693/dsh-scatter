@@ -19,6 +19,14 @@
           # 2..20 — how many times the same substring must repeat before it
           # counts as a loop. Lower = stricter.
           repetitionRepeats: 4
+        context:
+          # Bring the session's recent conversation in as background so the
+          # rewrite fits what you are working on. false = draft only.
+          enabled: true
+          # 1..10 — how many recent user turns to include.
+          maxTurns: 3
+          # 200..20000 — character budget for that background.
+          maxChars: 2000
         # 256..32768 — token cap for one optimization pass.
         maxTokens: 4096
         # 5000..600000 — abort an optimization that runs longer than this.
