@@ -212,7 +212,7 @@ lib/config.js          Config schema + normalization
 lib/versions.js        version-chain model (append-only, rollback by cursor)
 lib/client.js          browser half — composer button, panels, version chain
 cordis.patch.yml       bundle patch (one insert row)
-icon.svg               plugin icon shown by the plugin list
+icon.png               plugin icon shown by the plugin list
 package.json           dsh.bundle / dsh.client declarations
 ```
 

@@ -179,7 +179,7 @@ lib/config.js          Config schema 与归一化
 lib/versions.js        版本链模型（只追加、按游标回退）
 lib/client.js          浏览器半身 —— 输入框按钮、浮层、版本链
 cordis.patch.yml       bundle patch（一行 insert）
-icon.svg               插件列表显示的图标
+icon.png               插件列表显示的图标
 package.json           dsh.bundle / dsh.client 声明
 ```
 
