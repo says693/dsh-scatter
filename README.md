@@ -9,23 +9,30 @@ A prompt optimizer for the [DeepSeek Harness](https://github.com/deepseek-ai/dee
 > moved together, so the two cannot be installed side by side.
 
 A small sparkle button appears in the composer. Click it and the session's
-**current model** rewrites your draft into a better prompt — streaming the
-result straight back into the input box as it is generated. Or switch on
-multi-round mode and get several candidates (balanced / concise / detailed) to
-pick from.
+**current model** rewrites your draft into a better prompt. The result lands in
+a preview card first — nothing touches your input until you accept it. Turn on
+multi-round mode and each round also proposes three directions for what to
+improve next, plus a box to write your own.
 
 ## Features
 
-- **Streams into the input** — the rewrite replaces the draft token by token,
-  so you watch it form and keep typing when it lands.
+- **Preview before replace** — the rewrite streams into a card; the composer is
+  only written when you press Replace, and never before.
 - **Uses your current model** — no separate API key, no second provider config.
   Whatever provider/model the session has selected is what optimizes.
-- **Multi-round candidates** — generate 2–5 distinct variants, pick one, then
-  optimize again on top of it. The original wording stays pinned at the top.
-- **Optional wrapping** — turn the result into a `/goal` command, or append an
-  AI-browser verification request.
-- **Stops cleanly** — a real abort path; stopping restores your original draft
-  if the optimizer had already started overwriting it.
+- **Multi-round with a version chain** — each round builds on the previous one.
+  Every version is kept; you can roll back to any of them and continue from
+  there, which forks the chain without deleting anything.
+- **Three directions per round, from different dimensions** — constraints,
+  output format, role, success criteria, input handling, edge cases. Directions
+  already used in earlier rounds are excluded, so consecutive rounds do not
+  repeat the same advice. Write your own if none fit.
+- **Editable result** — the result area is a real textarea. What gets written
+  back is what you edited, not what the model produced.
+- **Output-quality probe** — before optimizing, the draft is checked for
+  repetition loops, useless-detail padding and filler phrasing; each detected
+  issue appends one corrective rule to the system prompt.
+- **Stops cleanly** — a real abort path; stopping restores your original draft.
 - **Local only** — the HTTP routes reject anything that is not a loopback
   request, are POST-only, and are capped on body and prompt size.
 
@@ -43,20 +50,24 @@ absolute path (or a git/registry spec once published).
 By hand: add `"dsh-prompt-scatter"` to the profile's `dependencies`, append it
 to `dsh.profile.bundles`, then run `pnpm install` inside the profile directory.
 
-The package is a DSH bundle — it declares `dsh.bundle.patch` for the host half
-and a `dsh.client` browser half, so it loads and unloads like any marketplace
-plugin.
-
 ## Usage
 
 | Action | Result |
 | --- | --- |
-| Click the sparkle button | Optimizes the current draft in place |
-| Hover the button | Shows the panel: model in use, the three toggles, live progress |
-| **Multi-round** on | Produces candidates instead of streaming; click one to adopt it |
-| **Set target** on | Asks the model for a measurable goal, then wraps the result as `/goal …` |
-| **Browser verify** on | Appends a request to verify the prompt with the AI browser |
-| Stop button | Aborts the in-flight optimization and restores the untouched draft |
+| Click the sparkle button | Optimizes the current draft and shows the result in a preview card |
+| **Replace input** | Writes the preview (or your edits) into the composer |
+| **Multi-round** on | Opens the multi-round panel; each round keeps a version |
+| Pick a direction | Starts the next round on top of the current version |
+| **Write your own direction** | Same, with a direction you type |
+| **History** | Lists every version; roll back to any of them |
+| **Replace input** in multi-round | Collapses the editor, keeps the direction list |
+| **Expand** | Brings the editor back after accepting |
+| **End multi-round** | Clears the chain and the session cache |
+
+Multi-round state is kept in `sessionStorage` per session, so a page reload
+keeps the chain. It is cleared once the prompt is actually sent — detected as
+"the chat gained a message and the draft is empty" — because the chain belongs
+to the prompt that was just consumed.
 
 ## How it works
 
@@ -66,7 +77,7 @@ Two halves, both plain modules:
 
 | Route | Purpose |
 | --- | --- |
-| `POST /api/dsh-prompt-scatter` | SSE stream of `{type:"delta"\|"candidate"\|"done"\|"error"}` frames |
+| `POST /api/dsh-prompt-scatter` | SSE stream; `mode` selects `optimize`, `continue` or `directions` |
 | `POST /api/dsh-prompt-scatter/stop` | Aborts the active optimization for a session |
 
 It calls `ctx.llm.stream({ provider, model, messages, system, maxTokens })`
@@ -83,20 +94,16 @@ Guardrails: loopback-only (non-loopback callers get 403), POST-only (405),
 
 ## Output-quality probe
 
-Before optimizing, the host inspects the draft for three failure modes that
-language models reproduce when asked to "improve" a prompt:
+Detection is pure text analysis — it never spends a second model call.
 
 | Issue | What it looks for |
 | --- | --- |
-| `repetition` | the same substring repeated over and over, or the same line repeated (leading numbering stripped, so `1. x` / `2. x` / `3. x` still trips) |
+| `repetition` | the same substring repeated, or the same line repeated (leading numbering stripped, so `1. x` / `2. x` / `3. x` still trips) |
 | `useless-detail` | density of incidental detail: timestamps, IPs, absolute paths, long digit runs, version numbers, URLs, quoted blobs |
 | `filler` | density of padding phrases ("please note", "it is important to", "in conclusion", and their Chinese equivalents) |
 
-Each detected issue appends one corrective rule to the system prompt, so the
-instruction set is chosen from the input instead of being fixed. The preview
-card reports which issues were defended against.
-
-Detection is pure text analysis — it never spends a second model call.
+Reported issue ids are surfaced in the preview card so you can see which rules
+were added.
 
 ## Configuration
 
@@ -170,21 +177,34 @@ other bundle. The interesting API differences it had to bridge:
 | `IconSparkle16` / `IconLoadingOutline16` | `IconSparkleRegular` / `IconLoadingOutlineRegular` | the primitives package exports the `Regular`/`Medium` variants |
 | `webui-po-*` classes, `/api/dsh-webui-prompt-optimizer` | `dsh-ps-*`, `/api/dsh-prompt-scatter` | drops the third-party namespace |
 
-The prompt-engineering system prompts, the SSE protocol, the abort path, the
-`<<< >>>` injection guard and the "restore the draft if untouched" rule are
-carried over unchanged.
+The prompt-engineering system prompts, the SSE protocol, the abort path and the
+`<<< >>>` injection guard are carried over unchanged.
 
 ## Layout
 
 ```
 lib/index.js           host half — routes, SSE, llm.stream, guardrails
+lib/directions.js      direction dimensions: classify, audit, diversify
 lib/probe.js           output-quality detector (repetition / detail / filler)
 lib/config.js          Config schema + normalization
-lib/client.js          browser half — composer button, panel, candidates
+lib/versions.js        version-chain model (append-only, rollback by cursor)
+lib/client.js          browser half — composer button, panels, version chain
 cordis.patch.yml       bundle patch (one insert row)
 icon.svg               plugin icon shown by the plugin list
 package.json           dsh.bundle / dsh.client declarations
 ```
+
+## Development
+
+```sh
+node scripts/sync-profile.mjs <profile-dir>          # copy into a profile
+node scripts/sync-profile.mjs <profile-dir> --check  # verify both copies match
+```
+
+The client half inlines a copy of the version model because
+`window.__ModuleLoader__` only resolves modules registered in the boot graph —
+it cannot `import "./versions.js"`. Keep the two in sync; the model is small and
+`lib/versions.js` stays the reference for the host and tests.
 
 ## Author
 
