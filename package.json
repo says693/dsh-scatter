@@ -27,6 +27,7 @@
     "cordis.patch.yml",
     "icon.svg",
     "README.md",
+    "README.zh-CN.md",
     "LICENSE"
   ],
   "main": "./lib/index.js",

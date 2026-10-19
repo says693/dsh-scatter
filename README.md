@@ -2,6 +2,8 @@
 
 [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
+**English** · [简体中文](README.zh-CN.md)
+
 A prompt optimizer for the [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) composer.
 
 > Renamed from `dsh-prompt-optimizer` in 0.2.0. Package name, plugin id, routes
@@ -29,6 +31,9 @@ improve next, plus a box to write your own.
   repeat the same advice. Write your own if none fit.
 - **Editable result** — the result area is a real textarea. What gets written
   back is what you edited, not what the model produced.
+- **Session-aware** — the optimization reads the session's recent conversation
+  as background, so the rewrite fits what you are working on instead of judging
+  the draft in isolation. Default: last 3 turns, ~2000 characters, configurable.
 - **Output-quality probe** — before optimizing, the draft is checked for
   repetition loops, useless-detail padding and filler phrasing; each detected
   issue appends one corrective rule to the system prompt.
@@ -92,6 +97,15 @@ write path. It never touches the editor DOM.
 Guardrails: loopback-only (non-loopback callers get 403), POST-only (405),
 4 MB request bodies, 200 000 character prompts, and a configurable timeout.
 
+### Where the session context comes from
+
+The `conversation.input.right` slot receives a `SessionSnapshot` that carries
+only lifecycle state (`running`, `openState`, `blank`, …) — no message bodies.
+The browser half therefore cannot assemble the conversation, so the context is
+read on the host through `sessions.deriveMessages()`, keeping the last N turns,
+dropping system messages and tool calls, and truncating by character budget from
+the most recent turn backwards.
+
 ## Output-quality probe
 
 Detection is pure text analysis — it never spends a second model call.
@@ -120,6 +134,10 @@ exported `Config` (schemastery) at activation:
           detailDensity: 0.55    # 0..1, lower = stricter
           fillerDensity: 0.5     # 0..1, lower = stricter
           repetitionRepeats: 4   # 2..20, lower = stricter
+        context:
+          enabled: true          # false = draft only, no session background
+          maxTurns: 3            # 1..10 recent turns
+          maxChars: 2000         # 200..20000 background budget
         maxTokens: 4096          # 256..32768
         timeoutMs: 90000         # 5000..600000
 ```
@@ -146,6 +164,10 @@ is applied after every bundle layer and wins by `id`:
       detailDensity: 0.55
       fillerDensity: 0.5
       repetitionRepeats: 6   # only this changed
+    context:
+      enabled: true
+      maxTurns: 3
+      maxChars: 2000
     maxTokens: 4096
     timeoutMs: 90000
 ```
