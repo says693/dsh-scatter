@@ -33,6 +33,12 @@
           sections: []
           # Appended verbatim after the protocol text.
           extra: ""
+        discipline:
+          # Which output-discipline rules the in-panel switch may insert.
+          # Empty = all four: no-overdetail / depth-budget / no-loop / escape-hatch.
+          sections: []
+          # Appended verbatim after the discipline text.
+          extra: ""
         # 256..32768 — token cap for one optimization pass.
         maxTokens: 4096
         # 5000..600000 — abort an optimization that runs longer than this.

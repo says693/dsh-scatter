@@ -38,6 +38,10 @@ improve next, plus a box to write your own.
   (narrate while working, speak up when you need a human, how to ask, budget
   your verification, plain speech) into the rewritten prompt. Off by default,
   and when on it applies to that one optimization only.
+- **Optional output discipline** — a second switch folds four rules against
+  over-detailing and looping (no detail for detail's sake, a depth budget, no
+  restating, an explicit exit condition) into the rewritten prompt. It states
+  where thoroughness is still required, so it does not teach the model to skimp.
 - **Output-quality probe** — before optimizing, the draft is checked for
   repetition loops, useless-detail padding and filler phrasing; each detected
   issue appends one corrective rule to the system prompt.
@@ -134,6 +138,26 @@ Rule ids: `narrate`, `ask`, `question`, `verify`, `speech`. Configure which ones
 the switch inserts with `habits.sections` (empty = all), and append free text
 with `habits.extra`.
 
+## Output discipline (the other opt-in switch)
+
+A second switch covers the opposite failure: output that buries the answer in
+detail, or keeps circling the same point. Its four rules are `no-overdetail`,
+`depth-budget`, `no-loop`, `escape-hatch` — each written as *what to aim for /
+how to self-check / what to do when you overshoot*.
+
+It is not a "be brief" instruction. Both ends are spelled out: the text says
+what must still be kept (evidence, risks, tradeoffs) and when thoroughness is
+still required (the user asked for it, or comparison is the deliverable). It
+also tells the model to say why a section needs depth, rather than silently
+compressing.
+
+Relationship to the probe: the probe is **automatic** — it inspects the draft
+and appends a corrective rule only when it finds a repetition or padding
+pattern. This switch is **manual** — it applies whether or not the draft looks
+bad, because the complaint is about the output's shape, not the input's. They
+can both fire in one request. Configure with `discipline.sections` and
+`discipline.extra`.
+
 ## Output-quality probe
 
 Detection is pure text analysis — it never spends a second model call.
@@ -169,6 +193,9 @@ exported `Config` (schemastery) at activation:
         habits:
           sections: []           # empty = all five rule ids
           extra: ""              # appended verbatim
+        discipline:
+          sections: []           # empty = all four rule ids
+          extra: ""              # appended verbatim
         maxTokens: 4096          # 256..32768
         timeoutMs: 90000         # 5000..600000
 ```
@@ -200,6 +227,9 @@ is applied after every bundle layer and wins by `id`:
       maxTurns: 3
       maxChars: 2000
     habits:
+      sections: []
+      extra: ""
+    discipline:
       sections: []
       extra: ""
     maxTokens: 4096
@@ -243,6 +273,7 @@ lib/index.js           host half — routes, SSE, llm.stream, guardrails
 lib/directions.js      direction dimensions: classify, audit, diversify
 lib/probe.js           output-quality detector (repetition / detail / filler)
 lib/habits.js          interaction-tuning prompt fragment (opt-in)
+lib/discipline.js      output-discipline fragment (opt-in)
 lib/config.js          Config schema + normalization
 lib/versions.js        version-chain model (append-only, rollback by cursor)
 lib/client.js          browser half — composer button, panels, version chain
