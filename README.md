@@ -1,10 +1,15 @@
 # dsh-prompt-scatter
 
 [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+[![npm](https://img.shields.io/npm/v/dsh-prompt-scatter)](https://www.npmjs.com/package/dsh-prompt-scatter)
 
 **English** · [简体中文](README.zh-CN.md)
 
 A prompt optimizer for the [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) composer.
+
+> **Not on npm yet.** The package is publish-ready and verified to install from a
+> tarball, but `npm publish` has not run. Until it does, install from a local
+> checkout or a git URL (see [Install](#install)).
 
 > Renamed from `dsh-prompt-optimizer` in 0.2.0. Package name, plugin id, routes
 > (`/api/dsh-prompt-scatter`), style prefix (`dsh-ps-*`) and storage keys all
@@ -53,15 +58,39 @@ improve next, plus a box to write your own.
 
 Requires DSH kernel `>= 0.2.0-rc.2`.
 
+**From npm** (recommended once published):
+
+```sh
+dsh plugin --profile <name> add dsh-prompt-scatter
+```
+
+**Or from the plugin UI**: **Settings → Plugins → Add plugin**, then enter
+`dsh-prompt-scatter` for the npm package, or an absolute path / git URL.
+
+**From a local checkout**:
+
 ```sh
 dsh plugin --profile <name> add file:/absolute/path/to/dsh-prompt-scatter
 ```
 
-Or install from the plugin UI: **Settings → Plugins → Add plugin**, and enter an
-absolute path (or a git/registry spec once published).
+**By hand**: add `"dsh-prompt-scatter"` to the profile's `dependencies`, append
+it to `dsh.profile.bundles`, then run `pnpm install` inside the profile directory.
 
-By hand: add `"dsh-prompt-scatter"` to the profile's `dependencies`, append it
-to `dsh.profile.bundles`, then run `pnpm install` inside the profile directory.
+### What npm does and does not install
+
+The published package carries both halves plus the bundle patch, so `npm i` (or
+the plugin UI) is enough to make DSH load it. Two things are *not* bundled,
+because the host already provides them at runtime:
+
+- `@deepseek-ai/dsh-llm`, `@deepseek-ai/cordis` — declared as peers, resolved
+  from the kernel's own `node_modules` (which is how official DSH plugins do it
+  too)
+- `react`, `react-dom`, `@deepseek-ai/dsh-client-ui-primitives` — browser-side
+  shell modules handed to every bundle by the host
+
+So installing into a profile with a working DSH kernel needs no extra steps.
+Only `@deepseek-ai/schemastery` comes along as a real dependency, for config
+validation.
 
 ## Usage
 

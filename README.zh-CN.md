@@ -1,10 +1,14 @@
 # dsh-prompt-scatter
 
 [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+[![npm](https://img.shields.io/npm/v/dsh-prompt-scatter)](https://www.npmjs.com/package/dsh-prompt-scatter)
 
 [English](README.md) · **简体中文**
 
 一个给 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)（DSH）输入框用的提示词优化插件。
+
+> **尚未发布到 npm。** 包已可发布，并验证过能从 tarball 正常安装，但还没执行
+> `npm publish`。在此之前请从本地目录或 git 地址安装（见[安装](#安装)）。
 
 输入框右侧会出现一个小星标。点它，会话**当前选中的模型**会把你的草稿改写成更好的提示词。
 结果先进预览卡，**你点「替换输入框」之前，输入框一个字都不会变**。
@@ -28,14 +32,36 @@
 
 需要 DSH 内核 `>= 0.2.0-rc.2`。
 
+**从 npm 安装**（发布后推荐）：
+
+```sh
+dsh plugin --profile <配置名> add dsh-prompt-scatter
+```
+
+**或者在插件界面安装**：**设置 → 插件 → 添加插件**，填 `dsh-prompt-scatter`
+（npm 包名），或绝对路径 / git 地址。
+
+**从本地目录安装**：
+
 ```sh
 dsh plugin --profile <配置名> add file:/绝对路径/dsh-prompt-scatter
 ```
 
-或者在插件界面安装：**设置 → 插件 → 添加插件**，填入绝对路径（发布到 registry 后也可以填包名）。
-
-手动安装：把 `"dsh-prompt-scatter"` 加进 profile 的 `dependencies`，把包名追加到
+**手动安装**：把 `"dsh-prompt-scatter"` 加进 profile 的 `dependencies`，把包名追加到
 `dsh.profile.bundles`，然后在 profile 目录里执行 `pnpm install`。
+
+### npm 装了什么、没装什么
+
+发布包里同时带主机半身、浏览器半身和 bundle patch，所以 `npm i`（或插件界面）
+足以让 DSH 加载它。有两类东西**不随包安装**，因为宿主运行时已经提供：
+
+- `@deepseek-ai/dsh-llm`、`@deepseek-ai/cordis` —— 声明为 peer，从内核自己的
+  `node_modules` 解析（官方 DSH 插件也是这么写的）
+- `react`、`react-dom`、`@deepseek-ai/dsh-client-ui-primitives` —— 宿主发给每个
+  bundle 的浏览器 shell 模块
+
+所以只要 profile 背后有一个能工作的 DSH 内核，安装不需要额外步骤。
+真正随包安装的依赖只有 `@deepseek-ai/schemastery`，用于配置校验。
 
 ## 使用
 

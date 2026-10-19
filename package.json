@@ -54,6 +54,10 @@
   "dependencies": {
     "@deepseek-ai/schemastery": "~3.18.4"
   },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
+  },
   "engines": {
     "node": ">=22.19.0"
   },
