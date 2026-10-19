@@ -27,6 +27,12 @@
           maxTurns: 3
           # 200..20000 — character budget for that background.
           maxChars: 2000
+        habits:
+          # Which habit rules the in-panel switch may insert. Empty = all five:
+          # narrate / ask / question / verify / speech.
+          sections: []
+          # Appended verbatim after the protocol text.
+          extra: ""
         # 256..32768 — token cap for one optimization pass.
         maxTokens: 4096
         # 5000..600000 — abort an optimization that runs longer than this.

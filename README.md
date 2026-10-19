@@ -34,6 +34,10 @@ improve next, plus a box to write your own.
 - **Session-aware** — the optimization reads the session's recent conversation
   as background, so the rewrite fits what you are working on instead of judging
   the draft in isolation. Default: last 3 turns, ~2000 characters, configurable.
+- **Optional interaction habits** — a switch folds five working habits
+  (narrate while working, speak up when you need a human, how to ask, budget
+  your verification, plain speech) into the rewritten prompt. Off by default,
+  and when on it applies to that one optimization only.
 - **Output-quality probe** — before optimizing, the draft is checked for
   repetition loops, useless-detail padding and filler phrasing; each detected
   issue appends one corrective rule to the system prompt.
@@ -106,6 +110,30 @@ read on the host through `sessions.deriveMessages()`, keeping the last N turns,
 dropping system messages and tool calls, and truncating by character budget from
 the most recent turn backwards.
 
+## Interaction habits (prompt-level, not system-level)
+
+`dsh-chatterbox` injects a similar protocol into the **system prompt** of every
+turn through `systemPrompt.section` — it is always on, and you cannot choose per
+message. This plugin takes the other position: the same idea becomes an **opt-in
+prompt fragment** behind a switch in the panel, applied only to the one
+optimization you are running.
+
+The two are deliberately not interchangeable:
+
+| | `dsh-chatterbox` | this switch |
+| --- | --- | --- |
+| Where it lands | system prompt section, every turn | the rewritten prompt text, once |
+| Who chooses | whoever edits the profile | whoever flips the switch |
+| Scope | all conversation | one optimization |
+| Text shape | five standing rules | five rules, each with *when it applies / what to do / how far to go* |
+
+Because it is prompt-level, it composes with whatever the draft is asking for
+instead of competing with it — and it survives being copied out of DSH.
+
+Rule ids: `narrate`, `ask`, `question`, `verify`, `speech`. Configure which ones
+the switch inserts with `habits.sections` (empty = all), and append free text
+with `habits.extra`.
+
 ## Output-quality probe
 
 Detection is pure text analysis — it never spends a second model call.
@@ -138,6 +166,9 @@ exported `Config` (schemastery) at activation:
           enabled: true          # false = draft only, no session background
           maxTurns: 3            # 1..10 recent turns
           maxChars: 2000         # 200..20000 background budget
+        habits:
+          sections: []           # empty = all five rule ids
+          extra: ""              # appended verbatim
         maxTokens: 4096          # 256..32768
         timeoutMs: 90000         # 5000..600000
 ```
@@ -168,6 +199,9 @@ is applied after every bundle layer and wins by `id`:
       enabled: true
       maxTurns: 3
       maxChars: 2000
+    habits:
+      sections: []
+      extra: ""
     maxTokens: 4096
     timeoutMs: 90000
 ```
@@ -208,6 +242,7 @@ The prompt-engineering system prompts, the SSE protocol, the abort path and the
 lib/index.js           host half — routes, SSE, llm.stream, guardrails
 lib/directions.js      direction dimensions: classify, audit, diversify
 lib/probe.js           output-quality detector (repetition / detail / filler)
+lib/habits.js          interaction-habits prompt fragment (opt-in)
 lib/config.js          Config schema + normalization
 lib/versions.js        version-chain model (append-only, rollback by cursor)
 lib/client.js          browser half — composer button, panels, version chain
