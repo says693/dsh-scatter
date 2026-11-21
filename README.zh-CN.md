@@ -1,14 +1,12 @@
 # dsh-prompt-scatter
 
 [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
-[![npm](https://img.shields.io/npm/v/dsh-prompt-scatter)](https://www.npmjs.com/package/dsh-prompt-scatter)
 
 [English](README.md) · **简体中文**
 
 一个给 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)（DSH）输入框用的提示词优化插件。
 
-> **尚未发布到 npm。** 包已可发布，并验证过能从 tarball 正常安装，但还没执行
-> `npm publish`。在此之前请从本地目录或 git 地址安装（见[安装](#安装)）。
+> **尚未发布到 npm。** 请先从本地目录安装（见[安装](#安装)）。
 
 输入框右侧会出现一个小星标。点它，会话**当前选中的模型**会把你的草稿改写成更好的提示词。
 结果先进预览卡，**你点「替换输入框」之前，输入框一个字都不会变**。
@@ -32,28 +30,18 @@
 
 需要 DSH 内核 `>= 0.2.0-rc.2`。
 
-**从 npm 安装**（发布后推荐）：
+克隆本仓库后，把本地目录安装到目标 DSH profile：
 
 ```sh
-dsh plugin --profile <配置名> add dsh-prompt-scatter
+dsh plugin --profile web add file:/绝对路径/dsh-scatter
 ```
 
-**或者在插件界面安装**：**设置 → 插件 → 添加插件**，填 `dsh-prompt-scatter`
-（npm 包名），或绝对路径 / git 地址。
+也可打开 **设置 → 插件 → 添加插件**，填入本地仓库的绝对路径。
 
-**从本地目录安装**：
+### 包内包含什么
 
-```sh
-dsh plugin --profile <配置名> add file:/绝对路径/dsh-prompt-scatter
-```
-
-**手动安装**：把 `"dsh-prompt-scatter"` 加进 profile 的 `dependencies`，把包名追加到
-`dsh.profile.bundles`，然后在 profile 目录里执行 `pnpm install`。
-
-### npm 装了什么、没装什么
-
-发布包里同时带主机半身、浏览器半身和 bundle patch，所以 `npm i`（或插件界面）
-足以让 DSH 加载它。有两类东西**不随包安装**，因为宿主运行时已经提供：
+软件包包含主机端、浏览器端和 bundle patch。请用 DSH 插件安装器加载 Bundle；普通
+`npm install` 不会启用插件。以下依赖由宿主在运行时提供：
 
 - `@deepseek-ai/dsh-llm`、`@deepseek-ai/cordis` —— 声明为 peer，从内核自己的
   `node_modules` 解析（官方 DSH 插件也是这么写的）
@@ -89,7 +77,7 @@ dsh plugin --profile <配置名> add file:/绝对路径/dsh-prompt-scatter
 | 路由 | 用途 |
 | --- | --- |
 | `POST /api/dsh-prompt-scatter` | SSE 流；`mode` 选 `optimize`、`continue` 或 `directions` |
-| `POST /api/dsh-prompt-scatter/stop` | 中止该会话正在进行的优化 |
+| `POST /api/dsh-prompt-scatter/stop` | 中止当前路由作用域内该会话的所有在途优化 |
 
 通过内核的供应商中立 LLM 接缝调用
 `ctx.llm.stream({ provider, model, messages, system, maxTokens })`，
@@ -100,7 +88,9 @@ dsh plugin --profile <配置名> add file:/绝对路径/dsh-prompt-scatter
 并且只通过 `inputActions.setDraft` 写回——这是唯一的公开写入路径，不碰编辑器 DOM。
 
 安全限制：仅回环（非回环调用返回 403）、仅 POST（405）、
-请求体 4 MB、提示词 20 万字符，超时可配置。
+请求体为 4 MB 以内的 JSON 对象（其他 JSON 值返回 400）、提示词 20 万字符，超时可配置。
+关闭 SSE 响应会中止对应模型调用，POST 请求体读完不会误触中止。
+卸载路由也会中止其在途调用，不影响其他路由作用域或会话。
 
 ### 会话上下文怎么取
 
@@ -265,7 +255,12 @@ package.json           dsh.bundle / dsh.client 声明
 ```sh
 node scripts/sync-profile.mjs <profile目录>          # 同步进 profile
 node scripts/sync-profile.mjs <profile目录> --check  # 检查两处是否一致
+node --experimental-vm-modules --test scripts/requests.test.mjs
 ```
+
+请求回归测试通过内存请求和确定性的模型替身执行现有主机端模块，另含一例只追加的回滚分叉验证。
+不需要安装 DSH 包、监听网络端口或提供模型 API 凭据。
+GitHub Actions 会运行这些测试并预览打包内容，不会发布到 npm。
 
 浏览器半身内联了一份版本模型副本，因为 `window.__ModuleLoader__` 只能解析
 启动图里注册过的模块，**无法** `import "./versions.js"`。

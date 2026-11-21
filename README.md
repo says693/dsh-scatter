@@ -1,15 +1,12 @@
 # dsh-prompt-scatter
 
 [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
-[![npm](https://img.shields.io/npm/v/dsh-prompt-scatter)](https://www.npmjs.com/package/dsh-prompt-scatter)
 
 **English** · [简体中文](README.zh-CN.md)
 
 A prompt optimizer for the [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) composer.
 
-> **Not on npm yet.** The package is publish-ready and verified to install from a
-> tarball, but `npm publish` has not run. Until it does, install from a local
-> checkout or a git URL (see [Install](#install)).
+> **Not on npm yet.** Install from a local checkout (see [Install](#install)).
 
 > Renamed from `dsh-prompt-optimizer` in 0.2.0. Package name, plugin id, routes
 > (`/api/dsh-prompt-scatter`), style prefix (`dsh-ps-*`) and storage keys all
@@ -58,29 +55,18 @@ improve next, plus a box to write your own.
 
 Requires DSH kernel `>= 0.2.0-rc.2`.
 
-**From npm** (recommended once published):
-
+After cloning this repository, install the checkout into a DSH profile:
 ```sh
-dsh plugin --profile <name> add dsh-prompt-scatter
+dsh plugin --profile web add file:/absolute/path/to/dsh-scatter
 ```
 
-**Or from the plugin UI**: **Settings → Plugins → Add plugin**, then enter
-`dsh-prompt-scatter` for the npm package, or an absolute path / git URL.
+Or open **Settings → Plugins → Add plugin** and enter the absolute checkout path.
 
-**From a local checkout**:
+### Package contents
 
-```sh
-dsh plugin --profile <name> add file:/absolute/path/to/dsh-prompt-scatter
-```
-
-**By hand**: add `"dsh-prompt-scatter"` to the profile's `dependencies`, append
-it to `dsh.profile.bundles`, then run `pnpm install` inside the profile directory.
-
-### What npm does and does not install
-
-The published package carries both halves plus the bundle patch, so `npm i` (or
-the plugin UI) is enough to make DSH load it. Two things are *not* bundled,
-because the host already provides them at runtime:
+The package carries both halves and the bundle patch. Use the DSH plugin
+installer to load it into a profile; ordinary `npm install` does not enable
+the bundle. The host provides these dependencies at runtime:
 
 - `@deepseek-ai/dsh-llm`, `@deepseek-ai/cordis` — declared as peers, resolved
   from the kernel's own `node_modules` (which is how official DSH plugins do it
@@ -120,7 +106,7 @@ Two halves, both plain modules:
 | Route | Purpose |
 | --- | --- |
 | `POST /api/dsh-prompt-scatter` | SSE stream; `mode` selects `optimize`, `continue` or `directions` |
-| `POST /api/dsh-prompt-scatter/stop` | Aborts the active optimization for a session |
+| `POST /api/dsh-prompt-scatter/stop` | Aborts all in-flight optimizations for the requested session in this route scope |
 
 It calls `ctx.llm.stream({ provider, model, messages, system, maxTokens })`
 through the kernel's provider-neutral LLM seam, so it works with every adapter
@@ -132,7 +118,10 @@ hook, and writes back only through `inputActions.setDraft` — the single public
 write path. It never touches the editor DOM.
 
 Guardrails: loopback-only (non-loopback callers get 403), POST-only (405),
-4 MB request bodies, 200 000 character prompts, and a configurable timeout.
+4 MB JSON-object request bodies (other JSON values get 400), 200 000 character
+prompts, and a configurable timeout. Closing the SSE response cancels its model
+call; finishing the POST body does not. Disposing the routes cancels their
+in-flight calls, without affecting another route scope or session.
 
 ### Where the session context comes from
 
@@ -316,7 +305,13 @@ package.json           dsh.bundle / dsh.client declarations
 ```sh
 node scripts/sync-profile.mjs <profile-dir>          # copy into a profile
 node scripts/sync-profile.mjs <profile-dir> --check  # verify both copies match
+node --experimental-vm-modules --test scripts/requests.test.mjs
 ```
+
+The request regression tests run the existing host modules with in-memory
+requests and a deterministic model double, plus one append-only rollback case.
+They need no installed DSH packages, network listener, or model API credentials.
+The CI workflow runs these tests and previews the npm package without publishing.
 
 The client half inlines a copy of the version model because
 `window.__ModuleLoader__` only resolves modules registered in the boot graph —
